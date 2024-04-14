@@ -71,11 +71,11 @@ pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)     
 
 generator = torch.manual_seed(0)    # torch.Generator object for RNG
 
-# device = torch.device("mps")
-# controlnet = controlnet.to(device)
-# pipe = pipe.to(device)
+device = torch.device("cuda")
+controlnet = controlnet.to(device)
+pipe = pipe.to(device)
 
-output = pipe("anime woman", num_inference_steps = 20, generator = generator, image = canny_image)
+output = pipe("watermelon", num_inference_steps = 20, generator = generator, image = canny_image)
 output = output.images
 output = output[0]
 
