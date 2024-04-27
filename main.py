@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     true_noise = torch.randn(512,512,3)
     # plt.imshow(true_noise)
-    
+    print(image_as_tensor)
     true_noise = true_noise[None,:,:,:]
     u_net = u_net_no_conditioning()
 
@@ -31,9 +31,11 @@ if __name__ == "__main__":
     print(f"using {device} device")
     u_net = u_net.to(device)
     
-    u_net_image = u_net(image_as_tensor.cuda())
+    u_net_tensor = u_net(image_as_tensor.cuda())
     print(u_net.parameters)
-    plt.imshow(u_net_image[0].permute(1,2,0).detach().numpy())
+    u_net_image = u_net_tensor[0].permute(1,2,0).cpu().detach().numpy()
+    print(u_net_image)
+    plt.imshow(u_net_image)
 
     # diffuser = guassian_diffusion(num_timesteps=1)
     # TEST = diffuser.q_sample(image_as_tensor, t)

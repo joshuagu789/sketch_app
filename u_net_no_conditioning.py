@@ -42,15 +42,13 @@ class u_net_no_conditioning(nn.Module):
         print(b.shape)
         b = self.relu(b)
 
-        x4,x3,x2,x1 = x4.to(device="cuda"), x3.to(device="cuda"), x2.to(device="cuda"), x1.to(device="cuda")
-
-        x = self.up_conv1.forward(b, x4)
+        x = self.up_conv1(b, x4)
         print(x.shape)
-        x = self.up_conv2.forward(x, x3)
+        x = self.up_conv2(x, x3)
         print(x.shape)
-        x = self.up_conv3.forward(x, x2)
+        x = self.up_conv3(x, x2)
         print(x.shape)
-        x = self.up_conv4.forward(x, x1)
+        x = self.up_conv4(x, x1)
         print(x.shape)
 
         x = self.final_conv(x)
@@ -85,7 +83,7 @@ class encoder_block(nn.Module):
         # x = self.dropout(x)
         return x
 
-class decoder_block():
+class decoder_block(nn.Module):
     """
     Encoder block for U Net
 
