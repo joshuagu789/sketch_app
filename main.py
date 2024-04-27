@@ -25,10 +25,14 @@ if __name__ == "__main__":
     
     true_noise = true_noise[None,:,:,:]
     u_net = u_net_no_conditioning()
-    u_net_image = u_net.u_net(input_layer=image_as_tensor)
-    print(u_net_image.shape)
-    image_uses_grad = u_net_image[0].permute(1,2,0)
-    plt.imshow(image_uses_grad)
+
+    # CUDA POWER
+    device = torch.device("cuda" if torch.cuda.is_available else "cpu")
+    print(f"using {device} device")
+    u_net = u_net.to(device)
+    
+    u_net_image = u_net(image_as_tensor.cuda())
+    print(u_net.parameters)
     plt.imshow(u_net_image[0].permute(1,2,0).detach().numpy())
 
     # diffuser = guassian_diffusion(num_timesteps=1)
