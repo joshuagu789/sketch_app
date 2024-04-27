@@ -20,7 +20,7 @@ class guassian_diffusion(nn.Module):
         scale = 1000 / num_timesteps
         beta_start = scale * 0.0001
         beta_end = scale * 0.02
-        betas = torch.linspace(beta_start, beta_end, num_timesteps, dtype = torch.float64) # creates 1d tensor from start to end with num_timesteps entries
+        betas = torch.linspace(beta_start, beta_end, num_timesteps, dtype = torch.float32) # creates 1d tensor from start to end with num_timesteps entries
 
         alphas = 1. - betas
         # are these buffers?
@@ -90,7 +90,7 @@ class guassian_diffusion(nn.Module):
 
 if __name__ == "__main__":
 
-    betas = torch.linspace(2, 20, 10, dtype = torch.float64)
+    betas = torch.linspace(2, 20, 10, dtype = torch.float32)
     print(betas)
     print(5. - betas)
     # print(betas.shape)
