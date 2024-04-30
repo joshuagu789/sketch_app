@@ -25,34 +25,34 @@ class u_net_no_conditioning(nn.Module):
         self.final_conv = nn.Conv2d(64,3,kernel_size=1) 
 
     def forward(self, inputs: torch.Tensor):
-        print(inputs.shape)
+        # print(inputs.shape)
         x1 = self.down_conv1(inputs)
-        print(x1.shape)
+        # print(x1.shape)
         x2 = self.down_conv2(x1)
-        print(x2.shape)
+        # print(x2.shape)
         x3 = self.down_conv3(x2)
-        print(x3.shape)
+        # print(x3.shape)
         x4 = self.down_conv4(x3)
-        print(x4.shape)
+        # print(x4.shape)
 
         b = self.bottleneck1(x4)
-        print(b.shape)
+        # print(b.shape)
         b = self.relu(b)
         b = self.bottleneck2(b)
-        print(b.shape)
+        # print(b.shape)
         b = self.relu(b)
 
         x = self.up_conv1(b, x4)
-        print(x.shape)
+        # print(x.shape)
         x = self.up_conv2(x, x3)
-        print(x.shape)
+        # print(x.shape)
         x = self.up_conv3(x, x2)
-        print(x.shape)
+        # print(x.shape)
         x = self.up_conv4(x, x1)
-        print(x.shape)
+        # print(x.shape)
 
         x = self.final_conv(x)
-        print(x.shape)
+        # print(x.shape)
 
         return x
     

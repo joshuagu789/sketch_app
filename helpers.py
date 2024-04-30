@@ -19,3 +19,15 @@ def extract(a: torch.Tensor, t: torch.Tensor, x_shape: torch.Size) -> torch.Tens
     b, *_ = t.shape
     out = a.gather(-1, t)
     return out.reshape(b, *((1,) * (len(x_shape) - 1)))
+
+def tensor_to_negative_one_to_one(tensor: torch.Tensor):
+    """
+    normalizes 4D tensor representing batch of images
+    """
+    return tensor * 2 - 1
+
+def tensor_to_zero_to_one(tensor: torch.Tensor):
+    """
+    unormalizes 4D tensor representing batch of images
+    """
+    return (tensor + 1) * 0.5 

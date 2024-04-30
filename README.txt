@@ -1,3 +1,5 @@
+NOTE: all images expected to have values between -1 and 1
+
 Sources used:
 https://www.kaggle.com/code/adrynh/pytorch-tutorial-with-fashion-mnist
 https://huggingface.co/docs/diffusers/v0.16.0/en/api/pipelines/stable_diffusion/controlnet
