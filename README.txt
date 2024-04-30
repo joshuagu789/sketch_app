@@ -8,9 +8,13 @@ https://github.com/lllyasviel/ControlNet
 
 https://www.youtube.com/watch?v=ZBKpAp_6TGI&ab_channel=UmarJamil
 https://www.assemblyai.com/blog/minimagen-build-your-own-imagen-text-to-image-model/
+
 https://huggingface.co/blog/annotated-diffusion
+https://huggingface.co/docs/diffusers/v0.18.2/en/tutorials/basic_training
+
 https://www.geeksforgeeks.org/u-net-architecture-explained/#
 https://towardsdatascience.com/cook-your-first-u-net-in-pytorch-b3297a844cf3
+
 https://github.com/AssemblyAI-Examples/MinImagen/tree/0f305c29922274e1faefe9e93be441fdb7ed0efa/minimagen
 https://www.assemblyai.com/blog/how-imagen-actually-works/
 

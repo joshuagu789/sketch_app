@@ -28,7 +28,7 @@ class guassian_diffusion(nn.Module):
         self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
         self.alphas_cumprod_prev = F.pad(self.alphas_cumprod[:-1], (1,0), value = 1.)     # pads vector with some stuff
 
-    def q_sample(self, x_start: torch.Tensor, t: torch.Tensor, noise=None, iterations = 1):
+    def q_sample(self, x_start: torch.Tensor, t: torch.Tensor, noise=None):
         """
         For forward diffusion and noise
 

@@ -28,6 +28,7 @@ if __name__ == "__main__":
     resizer = transforms.Resize((512,512))
     trainer = trainer()
     u_net = u_net_no_conditioning()
+    u_net.load_state_dict(torch.load("u_net01.pth"))
     u_net = u_net.to(device)
 
     tensor_data = torch.load("ninety-animals.pt") 
@@ -35,6 +36,8 @@ if __name__ == "__main__":
     dataloader = DataLoader(tensor_dataset, batch_size = batch_size, shuffle = True)
 
     trainer.train_loop(u_net, dataloader, batch_size, timesteps, learn_rate, epochs, device)
+    torch.save(u_net.state_dict(), "u_net01.pth")
+    
     """
     Loading raw jpg images and saving them as 4d tensor
     """
@@ -90,15 +93,15 @@ if __name__ == "__main__":
     # print(u_net_image)
     # plt.imshow(u_net_image)
 
-    print(t.size())
-    diffuser = guassian_diffusion(num_timesteps=timesteps)
+    # print(t.size())
+    # diffuser = guassian_diffusion(num_timesteps=timesteps)
 
-    TEST = diffuser.q_sample(image_as_tensor, t)
-    plt.imshow(TEST[0].permute(1,2,0))
+    # TEST = diffuser.q_sample(image_as_tensor, t)
+    # plt.imshow(TEST[0].permute(1,2,0))
 
-    for i in range(10):  
-        TEST = diffuser.q_sample(TEST, t)
-        plt.imshow(TEST[0].permute(1,2,0))
+    # for i in range(10):  
+    #     TEST = diffuser.q_sample(TEST, t)
+    #     plt.imshow(TEST[0].permute(1,2,0))
 
-    plt.imshow(TEST[0].permute(1,2,0))
+    # plt.imshow(TEST[0].permute(1,2,0))
     print("done")

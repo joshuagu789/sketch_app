@@ -25,7 +25,7 @@ class u_net_no_conditioning(nn.Module):
         self.final_conv = nn.Conv2d(64,3,kernel_size=1) 
 
     def forward(self, inputs: torch.Tensor):
-        # print(inputs.shape)
+        # print("start: " + str(inputs.shape))
         x1 = self.down_conv1(inputs)
         # print(x1.shape)
         x2 = self.down_conv2(x1)
@@ -33,13 +33,13 @@ class u_net_no_conditioning(nn.Module):
         x3 = self.down_conv3(x2)
         # print(x3.shape)
         x4 = self.down_conv4(x3)
-        # print(x4.shape)
+        # print("after downconv: " + str(x4.shape))
 
         b = self.bottleneck1(x4)
         # print(b.shape)
         b = self.relu(b)
         b = self.bottleneck2(b)
-        # print(b.shape)
+        # print("bottleneck: " + str(b.shape))
         b = self.relu(b)
 
         x = self.up_conv1(b, x4)
@@ -49,10 +49,10 @@ class u_net_no_conditioning(nn.Module):
         x = self.up_conv3(x, x2)
         # print(x.shape)
         x = self.up_conv4(x, x1)
-        # print(x.shape)
+        # print("after upconv: " + str(x.shape))
 
         x = self.final_conv(x)
-        # print(x.shape)
+        # print("final: " + str(x.shape))
 
         return x
     
@@ -68,9 +68,9 @@ class encoder_block(nn.Module):
         super().__init__()
 
         # performs conv and relu twice
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels = out_channels, kernel_size=3, padding=1) # replaced padding = same with padding = 1, kernel size (3,3) with 3 
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels = out_channels, kernel_size=3, padding="same") 
         self.relu = nn.ReLU()
-        self.conv2 = nn.Conv2d(in_channels = out_channels, out_channels = out_channels, kernel_size=3, padding=1) 
+        self.conv2 = nn.Conv2d(in_channels = out_channels, out_channels = out_channels, kernel_size=3, padding="same") 
         self.pool = nn.MaxPool2d(2)  # also seen input as just 2
         # self.dropout = nn.Dropout(dropout_factor)     # temp disabling this
 
@@ -93,9 +93,9 @@ class decoder_block(nn.Module):
     """
     def __init__(self, in_channels: int, out_channels: int, dropout_factor):
         super().__init__()
-        self.deconv = nn.ConvTranspose2d(in_channels = in_channels, out_channels=out_channels, kernel_size = (2,2), stride = (2,2))  # removed padding = same from three below
-        self.conv1 = nn.Conv2d(in_channels = in_channels, out_channels=out_channels, kernel_size = (3,3))
-        self.conv2 = nn.Conv2d(in_channels = out_channels, out_channels=out_channels, kernel_size = (3,3))
+        self.deconv = nn.ConvTranspose2d(in_channels = in_channels, out_channels=out_channels, kernel_size = (2,2), stride = (2,2))  
+        self.conv1 = nn.Conv2d(in_channels = in_channels, out_channels=out_channels, kernel_size = (3,3), padding="same")
+        self.conv2 = nn.Conv2d(in_channels = out_channels, out_channels=out_channels, kernel_size = (3,3), padding="same")
         self.relu = nn.ReLU()
         # self.dropout = nn.Dropout(dropout_factor) # temp disabling this
 
