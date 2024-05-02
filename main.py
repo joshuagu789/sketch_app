@@ -4,6 +4,7 @@ import torch
 import numpy as np
 from torchvision import transforms
 import matplotlib.pyplot as plt
+from torch.optim import Adam                # optimizer
 
 from torch.utils.data import DataLoader, TensorDataset
 import opendatasets as od
@@ -13,48 +14,58 @@ import glob
 from gaussian_diffusion import guassian_diffusion
 from u_net_no_conditioning import u_net_no_conditioning
 from trainer import trainer
+from image_loader import image_loader
 
 if __name__ == "__main__":
-    
+
     device = torch.device("cuda" if torch.cuda.is_available else "cpu")
     timesteps = 1000
     batch_size = 10
-    learn_rate = 1e-3
+    learn_rate = 0.1
     epochs = 1
     counter = 0
-    # rawdataset = []   # for process of converting jpg images into 4d tensor
+    rawdataset = []   # for process of converting jpg images into 4d tensor
 
-    pil_to_tensor = transforms.ToTensor()
-    resizer = transforms.Resize((512,512))
+    image_loader = image_loader()
     trainer = trainer()
-    u_net = u_net_no_conditioning()
-    u_net.load_state_dict(torch.load("u_net01.pth"))
-    u_net = u_net.to(device)
+    pil_to_tensor = transforms.ToTensor()
 
-    tensor_data = torch.load("ninety-animals.pt") 
-    tensor_dataset = TensorDataset(tensor_data)
-    dataloader = DataLoader(tensor_dataset, batch_size = batch_size, shuffle = True)
+    # state = torch.load("u_net01_and_optimizer.pth")     # contains state_dict and optimizer
+    # u_net = u_net_no_conditioning()
+    # u_net.load_state_dict(state["state_dict"])
+    # u_net = u_net.to(device)
+    # optimizer = Adam(u_net.parameters(), lr=learn_rate)  
+    # optimizer.load_state_dict(state["optimizer"]) 
 
-    trainer.train_loop(u_net, dataloader, batch_size, timesteps, learn_rate, epochs, device)
-    torch.save(u_net.state_dict(), "u_net01.pth")
+    # tensor_data = torch.load("ninety-animals.pt") 
+    # tensor_dataset = TensorDataset(tensor_data)
+    # dataloader = DataLoader(tensor_dataset, batch_size = batch_size, shuffle = True, pin_memory=True)
+
+    # trainer.train_loop(u_net, dataloader, batch_size, timesteps, learn_rate, epochs, device, optimizer)
+
+    # state = {
+    #     "state_dict": u_net.state_dict(),
+    #     "optimizer": optimizer.state_dict(),
+    # }
+    # torch.save(state, "u_net01_and_optimizer.pth")
     
     """
     Loading raw jpg images and saving them as 4d tensor
     """
     # od.download(
+    #     "https://www.kaggle.com/datasets/gpiosenka/100-bird-species"
+    # )    
+    # od.download(
     #     "https://www.kaggle.com/datasets/iamsouravbanerjee/animal-image-dataset-90-different-animals"
     # )
-    # for directory_name in os.listdir("animal-image-dataset-90-different-animals/animals/animals"):
-    #     for filename in glob.glob(os.path.join("animal-image-dataset-90-different-animals/animals/animals/" + str(directory_name),"*.jpg")):
-    #         # if counter <= 50:
-    #         img = Image.open(filename)
-    #         image_as_tensor = pil_to_tensor(img)
-    #         image_as_tensor = resizer(image_as_tensor)
-    #         image_as_tensor = image_as_tensor.to(torch.float32)
-    #         rawdataset.append(image_as_tensor)
-    #         print(counter)
-    #         counter += 1
-    # tensordataset = torch.stack(rawdataset)    # from array of 3d tensors into 4d tensor
+
+    tensordataset = image_loader.store_images_from_directory_as_tensor("100-bird-species/train/HARPY EAGLE")
+    print(tensordataset.size())
+    # plt.imshow(tensordataset[5].permute(1,2,0).cpu().detach().numpy())
+    # plt.imshow(tensordataset[53].permute(1,2,0).cpu().detach().numpy())
+    # plt.imshow(tensordataset[97].permute(1,2,0).cpu().detach().numpy())
+    # plt.imshow(tensordataset[167].permute(1,2,0).cpu().detach().numpy())
+    torch.save(tensordataset, "harpy_eagles01.pt")
     # torch.save(tensordataset, "ninety-animals.pt")
     
     # tensordataset = torch.load("ninety-animals.pt")
