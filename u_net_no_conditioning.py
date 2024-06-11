@@ -37,10 +37,10 @@ class u_net_no_conditioning(nn.Module):
 
         b = self.bottleneck1(x4)
         # print(b.shape)
-        b = self.relu(b)
+        # b = self.relu(b)
         b = self.bottleneck2(b)
         # print("bottleneck: " + str(b.shape))
-        b = self.relu(b)
+        # b = self.relu(b)
 
         x = self.up_conv1(b, x4)
         # print(x.shape)
@@ -112,50 +112,68 @@ class decoder_block(nn.Module):
         x = self.relu(x)
 
         return x
+    
+class dummy_u_net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding="same") 
+        self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding="same") 
+        self.conv3 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding="same") 
+        self.conv4 = nn.Conv2d(in_channels=256, out_channels=128, kernel_size=3, padding="same") 
+        self.conv5 = nn.Conv2d(in_channels=128, out_channels=64, kernel_size=3, padding="same") 
+        self.conv6 = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=3, padding="same") 
+        self.relu = nn.ReLU()
+    def forward(self, inputs: torch.Tensor):
+        x = self.conv1(inputs)
+        x = self.relu(x)
 
-    # def u_net(self, input_layer):
-    #     """
-    #     NOTE: taken from https://towardsdatascience.com/unet-line-by-line-explanation-9b191c76baf5
-    #             - CHANCES ARE THIS IS A UNET MODEL WITH NO CONDITIONING 
-    #             - DOES THIS ASSUME INPUT IMAGE HAS WIDTH AND HEIGHT 572 AND ONE CHANNEL FOR GRAYSCALE???
-    #     """
+        x = self.conv2(x)
+        x = self.relu(x)
 
-    #     print("beginning unet")
-    #     print(input_layer.shape)
-    #     # Contracting path
-    #     s1 = self.encoder_block(inputs = input_layer, in_channels = 3, out_channels=64, dropout_factor = 0.25)  # actually 3 for in channel rgb not grayscale
-    #     print(s1.shape)
-    #     s2 = self.encoder_block(inputs = s1, in_channels = 64, out_channels=128, dropout_factor = 0.5)
-    #     print(s2.shape)
-    #     s3 = self.encoder_block(inputs = s2, in_channels = 128, out_channels=256, dropout_factor = 0.5)
-    #     print(s3.shape)
-    #     s4 = self.encoder_block(inputs = s3, in_channels = 256, out_channels=512, dropout_factor = 0.5)
-    #     print(s4.shape)
+        x = self.conv3(x)
+        x = self.relu(x)
 
-    #     # Bottleneck
-    #     conv_bottleneck1 = nn.Conv2d(512,1024, (3, 3), padding="same")   #512 or 1024?
-    #     conv_bottleneck2 = nn.Conv2d(1024,1024, (3, 3), padding="same")   #512 or 1024?
-    #     relu = nn.ReLU()
+        x = self.conv4(x)
+        x = self.relu(x)
 
-    #     b1 = conv_bottleneck1(s4)
-    #     b1 = relu(b1)
-    #     b1 = conv_bottleneck2(b1)
-    #     b1 = relu(b1)
-    #     print(b1.shape)
+        x = self.conv5(x)
+        x = self.relu(x)
 
-    #     # Expansive path
-    #     s5 = self.decoder_block(inputs = b1, in_channels = 1024, out_channels=512, dropout_factor = 0.5, skip_features = s4)
-    #     print(s5.shape)
-    #     s6 = self.decoder_block(inputs = s5, in_channels = 512, out_channels=256, dropout_factor = 0.5, skip_features = s3)
-    #     print(s6.shape)
-    #     s7 = self.decoder_block(inputs = s6, in_channels = 256, out_channels=128, dropout_factor = 0.5, skip_features = s2)
-    #     print(s7.shape)
-    #     s8 = self.decoder_block(inputs = s7, in_channels = 128, out_channels=64, dropout_factor = 0.5, skip_features = s1)
-    #     print(s8.shape)
+        x = self.conv6(x)
 
-    #     final_conv = nn.Conv2d(64,3,kernel_size=1) 
-    #     out = final_conv(s8)
-    #     print(out.shape)
+        return x
 
-    #     return out  # final shape [x, 3, 452, 452]
+class small_u_net_no_conditioning(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Contracting path
+        self.down_conv1 = encoder_block(in_channels = 3, out_channels=64, dropout_factor = 0.25)
+        
+        # Bottleneck
+        self.bottleneck1 = nn.Conv2d(64,128, (3, 3), padding="same")
+        self.relu = nn.ReLU()    # remember to do twice
+        self.bottleneck2 = nn.Conv2d(128,128, (3, 3), padding="same")
 
+        # Expanding path
+        self.up_conv1 = decoder_block(in_channels = 128, out_channels=64, dropout_factor = 0.5)   #skip features = s4
+    
+        self.final_conv = nn.Conv2d(64,3,kernel_size=1) 
+
+    def forward(self, inputs: torch.Tensor):
+        # print("start: " + str(inputs.shape))
+        x1 = self.down_conv1(inputs)
+        # print("after downconv: " + str(x4.shape))
+
+        b = self.bottleneck1(x1)
+        b = self.relu(b)
+        b = self.bottleneck2(b)
+        # print("bottleneck: " + str(b.shape))
+        b = self.relu(b)
+
+        x = self.up_conv1(b, x1)
+        # print("after upconv: " + str(x.shape))
+
+        x = self.final_conv(x)
+        # print("final: " + str(x.shape))
+
+        return x
