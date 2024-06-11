@@ -14,6 +14,7 @@ import glob
 from gaussian_diffusion import guassian_diffusion
 from u_net_no_conditioning import u_net_no_conditioning, dummy_u_net, small_u_net_no_conditioning
 from trainer import trainer
+from helpers import tensor_to_negative_one_to_one, tensor_to_zero_to_one
 from image_loader import image_loader
 
 if __name__ == "__main__":
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     device = "cuda"
     timesteps = 1000
     batch_size = 10
-    learn_rate = 0.00001
+    learn_rate = 0.00005
     epochs = 50
     counter = 0
     rawdataset = []   # for process of converting jpg images into 4d tensor
@@ -49,7 +50,26 @@ if __name__ == "__main__":
     tensor_dataset = TensorDataset(tensor_data)
     dataloader = DataLoader(tensor_dataset, batch_size = batch_size, shuffle = True, pin_memory=True)
 
-    noise_tool.denoise(predictor=u_net)   # evaluate model
+    """
+    TESTING MODEL
+    """
+    original_image = tensor_data[0]
+    original_image_4d = original_image[None,:,:,:]
+    plt.imshow(original_image_4d[0].permute(1,2,0).cpu().detach().numpy())
+    test_prediction = u_net(tensor_to_negative_one_to_one(original_image_4d).to("cuda"))
+    test = original_image_4d.to("cuda") - test_prediction
+    plt.imshow(tensor_to_zero_to_one(test_prediction[0].permute(1,2,0).cpu().detach().numpy()))
+
+    t = torch.randint(999, 1000, (1,))
+
+    noised = noise_tool.q_sample(tensor_to_negative_one_to_one(original_image_4d),t=t)
+
+    denoised = noise_tool.dummy_sample_timestep(model=u_net,x=noised,t=t)   # evaluate model
+    plt.imshow(tensor_to_zero_to_one(denoised[0].permute(1,2,0).cpu().detach().numpy()))
+    for i in range(500):
+        denoised = noise_tool.dummy_sample_timestep(model=u_net,x=denoised,t=t)   # evaluate model
+        if i % 5 == 0 and i != 0:
+            plt.imshow(tensor_to_zero_to_one(denoised[0].permute(1,2,0).cpu().detach().numpy()))
 
     trainer.train_loop(
         noise_predictor=u_net, 
@@ -69,7 +89,7 @@ if __name__ == "__main__":
         "epoch_history": epoch_history,
         # "scheduler": scheduler.state_dict(),
     }
-    torch.save(state, "dummy_u_net_10_harpy_eagles.pth")
+    torch.save(state, "saved_stuff/dummy_u_net_10_harpy_eagles.pth")
     
     """
     Loading raw jpg images and saving them as 4d tensor

@@ -12,6 +12,7 @@ class guassian_diffusion():
 
 
     """
+    @torch.no_grad
     def __init__(self, *, num_timesteps: int):
         super().__init__()
         
@@ -23,12 +24,18 @@ class guassian_diffusion():
         beta_end = scale * 0.02
         self.betas = torch.linspace(beta_start, beta_end, num_timesteps, dtype = torch.float32) # creates 1d tensor from start to end with num_timesteps entries
 
-        alphas = 1. - betas
+        alphas = 1. - self.betas
         # are these buffers?
         self.alphas_cumprod = torch.cumprod(alphas,axis=0)    # returns cumulative product of alphas as same size tensor/vector
         self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
-        self.alphas_cumprod_prev = F.pad(self.alphas_cumprod[:-1], (1,0), value = 1.)     # pads vector with some stuff
+        self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1-self.alphas_cumprod)
 
+        # COPY PASTA
+        self.sqrt_recip_alphas = torch.sqrt(1.0 / alphas)
+        self.alphas_cumprod_prev = F.pad(self.alphas_cumprod[:-1], (1,0), value = 1.)     # pads vector with some stuff
+        self.posterior_variance = self.betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
+
+    @torch.no_grad
     def q_sample(self, x_start: torch.Tensor, t: torch.Tensor, noise=None):
         """
         For forward diffusion and noise
@@ -43,24 +50,26 @@ class guassian_diffusion():
         if(noise is not None):
             actual_noise = noise
         
-        """
-        NOTE: below code doesnt use extract() from helpers class but does exactly what extract intends to do
-        """
-        b, *_ = t.shape     # what does *_ do?
+        return extract(self.sqrt_alphas_cumprod.to("cuda"), t.to("cuda"), x_start.shape) * x_start.to("cuda") + extract(self.sqrt_one_minus_alphas_cumprod.to("cuda"), t.to("cuda"), x_start.shape) * actual_noise.to("cuda")
+        
+        # """
+        # NOTE: below code doesnt use extract() from helpers class but does exactly what extract intends to do
+        # """
+        # b, *_ = t.shape     # what does *_ do?
 
         # -1 means use the last dimension instead which is dim = 0 for 1d tensor??
         # in this case gather takes all values of 1d column tensor sqrt of cum product of alphas at each index of t where each timestep occurs- less computing required?
-        out1 = self.sqrt_alphas_cumprod.gather(-1,t.to(torch.int64))  # EXPERIMENTAL: CONVERTED t TO INT64
-        summation_sqrt_alphas_cumprod = out1.reshape(b, *((1,) * (len(x_start.shape)-1)))   #most important line but difficulty understanding- something must have been doned iteratively
+        # out1 = self.sqrt_alphas_cumprod.gather(-1,t.to(torch.int64))  # EXPERIMENTAL: CONVERTED t TO INT64
+        # summation_sqrt_alphas_cumprod = out1.reshape(b, *((1,) * (len(x_start.shape)-1)))   #most important line but difficulty understanding- something must have been doned iteratively
 
-        out2 = (1. - self.sqrt_alphas_cumprod).gather(-1,t.to(torch.int64))  # EXPERIMENTAL: CONVERTED t TO INT64
-        summation_one_minus_sqrt_alphas_cumprod = out2.reshape(b, *((1,) * (len(x_start.shape)-1)))
+        # out2 = (1. - self.sqrt_alphas_cumprod).gather(-1,t.to(torch.int64))  # EXPERIMENTAL: CONVERTED t TO INT64
+        # summation_one_minus_sqrt_alphas_cumprod = out2.reshape(b, *((1,) * (len(x_start.shape)-1)))
 
-        after_applying_noise = summation_sqrt_alphas_cumprod * x_start + summation_one_minus_sqrt_alphas_cumprod * actual_noise
-        # for i in range(iterations-1):
-        #     after_applying_noise = after_applying_noise + summation_sqrt_alphas_cumprod * x_start + summation_one_minus_sqrt_alphas_cumprod * actual_noise
+        # after_applying_noise = summation_sqrt_alphas_cumprod * x_start + summation_one_minus_sqrt_alphas_cumprod * actual_noise
+        # # for i in range(iterations-1):
+        # #     after_applying_noise = after_applying_noise + summation_sqrt_alphas_cumprod * x_start + summation_one_minus_sqrt_alphas_cumprod * actual_noise
         
-        return after_applying_noise
+        # return after_applying_noise
     
     def predict_start_from_noise(self, x_t: torch.Tensor, t: torch.Tensor, noise: torch.Tensor):
         """
@@ -109,32 +118,41 @@ class guassian_diffusion():
                 plt.imshow(tensor_to_zero_to_one(image[0]).permute(1,2,0).cpu().detach().numpy())
         return image
 
+    # COPY PASTAD
     @torch.no_grad()
-    def sample_timestep(x, t):
+    def sample_timestep(self, model, x, t):
         """
         Calls the model to predict the noise in the image and returns 
         the denoised image. 
         Applies noise to this image, if we are not in the last step yet.
         """
+        x = x.to("cuda")
         betas_t = get_index_from_list(self.betas, t, x.shape)
         sqrt_one_minus_alphas_cumprod_t = get_index_from_list(
-            sqrt_one_minus_alphas_cumprod, t, x.shape
+            self.sqrt_one_minus_alphas_cumprod, t, x.shape
         )
-        sqrt_recip_alphas_t = get_index_from_list(sqrt_recip_alphas, t, x.shape)
+        sqrt_recip_alphas_t = get_index_from_list(self.sqrt_recip_alphas, t, x.shape)
         
         # Call model (current image - noise prediction)
-        model_mean = sqrt_recip_alphas_t * (
-            x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
+        model_mean = sqrt_recip_alphas_t.to("cuda") * (
+            # x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
+            x - betas_t.to("cuda") * model(x) / sqrt_one_minus_alphas_cumprod_t.to("cuda")
         )
-        posterior_variance_t = get_index_from_list(posterior_variance, t, x.shape)
+        posterior_variance_t = get_index_from_list(self.posterior_variance, t, x.shape)
         
+        print(model_mean.shape)
         if t == 0:
             # As pointed out by Luis Pereira (see YouTube comment)
             # The t's are offset from the t's in the paper
             return model_mean
         else:
             noise = torch.randn_like(x)
-            return model_mean + torch.sqrt(posterior_variance_t) * noise
+            return model_mean + torch.sqrt(posterior_variance_t).to("cuda") * noise.to("cuda")
+    #TEST
+    @torch.no_grad()
+    def dummy_sample_timestep(self, model, x, t):
+        x = x.to("cuda")
+        return x - model(x)
     
 if __name__ == "__main__":
 
@@ -143,4 +161,4 @@ if __name__ == "__main__":
     # print(5. - betas)
     # # print(betas.shape)
     # print(torch.cumprod(betas,axis=0))
-    # print("done")
+    print("done")
