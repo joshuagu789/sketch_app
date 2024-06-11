@@ -11,6 +11,7 @@ https://www.assemblyai.com/blog/minimagen-build-your-own-imagen-text-to-image-mo
 
 https://huggingface.co/blog/annotated-diffusion
 https://huggingface.co/docs/diffusers/v0.18.2/en/tutorials/basic_training
+https://colab.research.google.com/drive/1sjy9odlSSy0RBVgMTgP7s99NXsqglsUL?usp=sharing#scrollTo=k13hj2mciCHA
 
 https://www.geeksforgeeks.org/u-net-architecture-explained/#
 https://towardsdatascience.com/cook-your-first-u-net-in-pytorch-b3297a844cf3
