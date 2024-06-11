@@ -37,14 +37,14 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.MultiplicativeLR(optimizer=optimizer, lr_lambda=0.999)
     epoch_history = []
 
-    state = torch.load("dummy_u_net_10_harpy_eagles.pth")     # contains state_dict and optimizer and epoch history
+    state = torch.load("saved_stuff/dummy_u_net_10_harpy_eagles.pth")     # contains state_dict and optimizer and epoch history
     u_net.load_state_dict(state["state_dict"])
     optimizer.load_state_dict(state["optimizer"]) 
     for group in optimizer.param_groups:            # updating learn rate dynamically
         group["lr"] = learn_rate
     epoch_history = state["epoch_history"]
 
-    tensor_data = torch.load("harpy_eagles01.pt") 
+    tensor_data = torch.load("saved_stuff/harpy_eagles01.pt") 
     tensor_dataset = TensorDataset(tensor_data)
     dataloader = DataLoader(tensor_dataset, batch_size = batch_size, shuffle = True, pin_memory=True)
 
