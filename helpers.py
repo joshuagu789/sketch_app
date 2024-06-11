@@ -31,3 +31,13 @@ def tensor_to_zero_to_one(tensor: torch.Tensor):
     unormalizes 4D tensor representing batch of images
     """
     return (tensor + 1) * 0.5 
+
+# COPY PASTA FROM https://colab.research.google.com/drive/1sjy9odlSSy0RBVgMTgP7s99NXsqglsUL?usp=sharing#scrollTo=k13hj2mciCHA
+def get_index_from_list(vals, t, x_shape):
+    """ 
+    Returns a specific index t of a passed list of values vals
+    while considering the batch dimension.
+    """
+    batch_size = t.shape[0]
+    out = vals.gather(-1, t.cpu())
+    return out.reshape(batch_size, *((1,) * (len(x_shape) - 1))).to(t.device)

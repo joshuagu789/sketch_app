@@ -29,6 +29,7 @@ if __name__ == "__main__":
     image_loader = image_loader()
     trainer = trainer()
     pil_to_tensor = transforms.ToTensor()
+    noise_tool = guassian_diffusion(num_timesteps=timesteps)
 
     u_net = dummy_u_net()
     # u_net = small_u_net_no_conditioning()
@@ -47,6 +48,8 @@ if __name__ == "__main__":
     tensor_data = torch.load("saved_stuff/harpy_eagles01.pt") 
     tensor_dataset = TensorDataset(tensor_data)
     dataloader = DataLoader(tensor_dataset, batch_size = batch_size, shuffle = True, pin_memory=True)
+
+    noise_tool.denoise(predictor=u_net)   # evaluate model
 
     trainer.train_loop(
         noise_predictor=u_net, 

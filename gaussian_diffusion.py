@@ -1,10 +1,11 @@
 from torch import nn
 import torch
 import torch.nn.functional as F
+import matplotlib.pyplot as plt 
 
-from helpers import extract
+from helpers import extract, tensor_to_negative_one_to_one, tensor_to_zero_to_one, get_index_from_list
 
-class guassian_diffusion(nn.Module):
+class guassian_diffusion():
     """
     From
     https://www.assemblyai.com/blog/minimagen-build-your-own-imagen-text-to-image-model/
@@ -20,7 +21,7 @@ class guassian_diffusion(nn.Module):
         scale = 1000 / num_timesteps
         beta_start = scale * 0.0001
         beta_end = scale * 0.02
-        betas = torch.linspace(beta_start, beta_end, num_timesteps, dtype = torch.float32) # creates 1d tensor from start to end with num_timesteps entries
+        self.betas = torch.linspace(beta_start, beta_end, num_timesteps, dtype = torch.float32) # creates 1d tensor from start to end with num_timesteps entries
 
         alphas = 1. - betas
         # are these buffers?
@@ -71,28 +72,75 @@ class guassian_diffusion(nn.Module):
                             # represents noisy image                                        represents predicted noise
         return extract(sqrt_reciprocal_alphas_cumprod,t,x_t.shape) * x_t - extract(sqrt_reciprocal_of_alphas_cumprod_minus_one, t, x_t.shape) * noise
 
-    def q_posterior(self, x_start: torch.Tensor, x_t: torch.Tensor, t: torch.Tensor, **kwargs):
+    # def q_posterior(self, x_start: torch.Tensor, x_t: torch.Tensor, t: torch.Tensor, **kwargs):
+    #     """
+    #     Calculates & returns the posterior mean and variance- this represents the distribution to denoise the noisy image step by step
+    #     """
+    #     posterior_mean_coef1 = betas * torch.sqrt(self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)    # see formulas online ddpm paper
+    #     posterior_mean_coef2 = (1. - self.alphas_cumprod_prev) * torch.sqrt(self.alphas) / (1. - self.alphas_cumprod)
+
+    #     posterior_mean = extract(posterior_mean_coef1, t, x_t.shape) * x_start + extract(posterior_mean_coef2, t, x_t.shape) * x_t
+
+    #     posterior_variance = betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
+    #     posterior_variance = extract(posterior_variance, t, x_t.shape)
+
+    #                                                 # prevents posterior variance from being zero at start (or anywhere)
+    #     posterior_log_variance_clipped = extract( torch.log(posterior_variance.clamp(min=1e-20)) , t, x_t)
+
+    #     return posterior_mean, posterior_variance, posterior_log_variance_clipped
+    
+    def denoise(self, predictor, x_t = None):
         """
-        Calculates & returns the posterior mean and variance- this represents the distribution to denoise the noisy image step by step
+        x_t should be 4d, below code assumes batch size of 1
         """
-        posterior_mean_coef1 = betas * torch.sqrt(self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)    # see formulas online ddpm paper
-        posterior_mean_coef2 = (1. - self.alphas_cumprod_prev) * torch.sqrt(self.alphas) / (1. - self.alphas_cumprod)
+        if x_t is None:
+            x_t = torch.randn(size=(1,3,224,224))
+        
+        image = x_t
+        t = torch.linspace(0, 0, 1, dtype = torch.float32)
+        t = t.to(torch.int64)
+        t = t.to("cuda")
+        image = image.to("cuda")
 
-        posterior_mean = extract(posterior_mean_coef1, t, x_t.shape) * x_start + extract(posterior_mean_coef2, t, x_t.shape) * x_t
+        for x in range(1000):
+            prediction = predictor(tensor_to_negative_one_to_one(image).to("cuda"))    #beware convert to 0-1 in between calculations?
+            image = self.predict_start_from_noise(prediction.to("cpu"), t.to("cpu"), image.to("cpu"))
+            if x % 997 == 0:
+                plt.imshow(tensor_to_zero_to_one(image[0]).permute(1,2,0).cpu().detach().numpy())
+        return image
 
-        posterior_variance = betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
-        posterior_variance = extract(posterior_variance, t, x_t.shape)
-
-                                                    # prevents posterior variance from being zero at start (or anywhere)
-        posterior_log_variance_clipped = extract( torch.log(posterior_variance.clamp(min=1e-20)) , t, x_t)
-
-        return posterior_mean, posterior_variance, posterior_log_variance_clipped
-
+    @torch.no_grad()
+    def sample_timestep(x, t):
+        """
+        Calls the model to predict the noise in the image and returns 
+        the denoised image. 
+        Applies noise to this image, if we are not in the last step yet.
+        """
+        betas_t = get_index_from_list(self.betas, t, x.shape)
+        sqrt_one_minus_alphas_cumprod_t = get_index_from_list(
+            sqrt_one_minus_alphas_cumprod, t, x.shape
+        )
+        sqrt_recip_alphas_t = get_index_from_list(sqrt_recip_alphas, t, x.shape)
+        
+        # Call model (current image - noise prediction)
+        model_mean = sqrt_recip_alphas_t * (
+            x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
+        )
+        posterior_variance_t = get_index_from_list(posterior_variance, t, x.shape)
+        
+        if t == 0:
+            # As pointed out by Luis Pereira (see YouTube comment)
+            # The t's are offset from the t's in the paper
+            return model_mean
+        else:
+            noise = torch.randn_like(x)
+            return model_mean + torch.sqrt(posterior_variance_t) * noise
+    
 if __name__ == "__main__":
 
-    betas = torch.linspace(2, 20, 10, dtype = torch.float32)
-    print(betas)
-    print(5. - betas)
-    # print(betas.shape)
-    print(torch.cumprod(betas,axis=0))
-    print("done")
+    # betas = torch.linspace(2, 20, 10, dtype = torch.float32)
+    # print(betas)
+    # print(5. - betas)
+    # # print(betas.shape)
+    # print(torch.cumprod(betas,axis=0))
+    # print("done")
