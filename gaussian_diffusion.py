@@ -136,11 +136,10 @@ class guassian_diffusion():
         # Call model (current image - noise prediction)
         model_mean = sqrt_recip_alphas_t.to("cuda") * (
             # x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
-            x - betas_t.to("cuda") * model(x) / sqrt_one_minus_alphas_cumprod_t.to("cuda")
+            x - betas_t.to("cuda") * model(x.to("cuda"), t.to("cuda")) / sqrt_one_minus_alphas_cumprod_t.to("cuda")
         )
         posterior_variance_t = get_index_from_list(self.posterior_variance, t, x.shape)
         
-        print(model_mean.shape)
         if t == 0:
             # As pointed out by Luis Pereira (see YouTube comment)
             # The t's are offset from the t's in the paper

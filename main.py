@@ -4,6 +4,7 @@ import torch
 import numpy as np
 from torchvision import transforms
 import matplotlib.pyplot as plt
+import cv2
 from torch.optim import Adam                # optimizer
 
 from torch.utils.data import DataLoader, TensorDataset
@@ -12,18 +13,25 @@ import os
 import glob
 
 from gaussian_diffusion import guassian_diffusion
+from guassian_diffusion_copy_pasta import sample_timestep
 from u_net_no_conditioning import u_net_no_conditioning, dummy_u_net, small_u_net_no_conditioning
+from u_net_copy_pasta import SimpleUnet
 from trainer import trainer
 from helpers import tensor_to_negative_one_to_one, tensor_to_zero_to_one
 from image_loader import image_loader
 
 if __name__ == "__main__":
 
+    od.download(
+        "https://www.kaggle.com/datasets/crawford/cat-dataset?resource=download"
+    )   
+
     device = "cuda"
     timesteps = 1000
-    batch_size = 10
-    learn_rate = 0.00005
-    epochs = 50
+    T = 1000
+    batch_size = 50
+    learn_rate = 0.0003
+    epochs = 500
     counter = 0
     rawdataset = []   # for process of converting jpg images into 4d tensor
 
@@ -32,44 +40,91 @@ if __name__ == "__main__":
     pil_to_tensor = transforms.ToTensor()
     noise_tool = guassian_diffusion(num_timesteps=timesteps)
 
-    u_net = dummy_u_net()
+    # u_net = dummy_u_net()
+    u_net = SimpleUnet()
     # u_net = small_u_net_no_conditioning()
     u_net = u_net.to(device)
     optimizer = Adam(u_net.parameters(), lr=learn_rate)  
     scheduler = torch.optim.lr_scheduler.MultiplicativeLR(optimizer=optimizer, lr_lambda=0.999)
     epoch_history = []
 
-    state = torch.load("saved_stuff/dummy_u_net_10_harpy_eagles.pth")     # contains state_dict and optimizer and epoch history
+    state = torch.load("saved_stuff/super_copied_u_net_10_harpy_eagles.pth")     # contains state_dict and optimizer and epoch history
     u_net.load_state_dict(state["state_dict"])
     optimizer.load_state_dict(state["optimizer"]) 
     for group in optimizer.param_groups:            # updating learn rate dynamically
         group["lr"] = learn_rate
     epoch_history = state["epoch_history"]
 
-    tensor_data = torch.load("saved_stuff/harpy_eagles01.pt") 
+    tensor_data = torch.load("saved_stuff/all_harpy_eagles_80_width.pt") 
     tensor_dataset = TensorDataset(tensor_data)
     dataloader = DataLoader(tensor_dataset, batch_size = batch_size, shuffle = True, pin_memory=True)
 
     """
     TESTING MODEL
     """
-    original_image = tensor_data[0]
-    original_image_4d = original_image[None,:,:,:]
-    plt.imshow(original_image_4d[0].permute(1,2,0).cpu().detach().numpy())
-    test_prediction = u_net(tensor_to_negative_one_to_one(original_image_4d).to("cuda"))
-    test = original_image_4d.to("cuda") - test_prediction
-    plt.imshow(tensor_to_zero_to_one(test_prediction[0].permute(1,2,0).cpu().detach().numpy()))
+    def show_tensor_image(image):
+        reverse_transforms = transforms.Compose([
+            transforms.Lambda(lambda t: (t + 1) / 2),
+            transforms.Lambda(lambda t: t.permute(1, 2, 0)), # CHW to HWC
+            transforms.Lambda(lambda t: t * 255.),
+            transforms.Lambda(lambda t: t.numpy().astype(np.uint8)),
+            transforms.ToPILImage(),
+        ])
 
-    t = torch.randint(999, 1000, (1,))
+        # Take first image of batch
+        if len(image.shape) == 4:
+            image = image[0, :, :, :] 
+        plt.imshow(reverse_transforms(image))
 
-    noised = noise_tool.q_sample(tensor_to_negative_one_to_one(original_image_4d),t=t)
+    # a = image_loader.store_images_from_directory_as_tensor("100-bird-species/train/HARPY EAGLE", image_limit=-1, width_and_height=80)
+    # print(a.size())
+    # plt.imshow(a[20].permute(1,2,0).cpu().detach().numpy())
+    # torch.save(a, "saved_stuff/all_harpy_eagles_80_width.pt")
 
-    denoised = noise_tool.dummy_sample_timestep(model=u_net,x=noised,t=t)   # evaluate model
-    plt.imshow(tensor_to_zero_to_one(denoised[0].permute(1,2,0).cpu().detach().numpy()))
-    for i in range(500):
-        denoised = noise_tool.dummy_sample_timestep(model=u_net,x=denoised,t=t)   # evaluate model
-        if i % 5 == 0 and i != 0:
-            plt.imshow(tensor_to_zero_to_one(denoised[0].permute(1,2,0).cpu().detach().numpy()))
+    """sampling test"""
+    # test_numpy = tensor_data[0].cpu().detach().numpy()
+    # test_numpy2 = (np.moveaxis(test_numpy, 0, -1) * 255).astype(np.uint8)
+
+    # cv2.imshow("a", test_numpy2)
+    # test1 = cv2.Canny(test_numpy2, 50, 100)
+    # plt.imshow(test1)
+
+    # original_image = tensor_data[0]
+    # original_image_4d = original_image[None,:,:,:]
+    # # plt.imshow(original_image_4d[0].permute(1,2,0).cpu().detach().numpy())
+    # test_prediction = u_net(tensor_to_negative_one_to_one(original_image_4d).to("cuda"))
+    # test = original_image_4d.to("cuda") - test_prediction
+    # plt.imshow(tensor_to_zero_to_one(test_prediction[0].permute(1,2,0).cpu().detach().numpy()))
+
+    # t = torch.randint(999, 1000, (1,))
+
+    # noised = noise_tool.q_sample(tensor_to_negative_one_to_one(original_image_4d),t=t)
+    # denoised = torch.randn((1,3,224,224))
+    # plt.figure(figsize=(15,15))
+    # plt.axis('off')
+
+    # denoised = noise_tool.sample_timestep(model=u_net,x=noised,t=t)   # evaluate model
+    # plt.imshow(tensor_to_zero_to_one(denoised[0].permute(1,2,0).cpu().detach().numpy()))
+
+    # img_size = 80
+    # img = torch.randn((1, 3, img_size, img_size), device=device)
+    # plt.figure(figsize=(15,15))
+    # plt.axis('off')
+    # num_images = 10
+    # stepsize = int(T/num_images)
+
+    # for i in range(0,T)[::-1]:
+    #     print(i)
+    #     t = torch.full((1,), i, device=device, dtype=torch.long)
+    #     img = sample_timestep(u_net, img, t)
+    #     # Edit: This is to maintain the natural range of the distribution
+    #     img = torch.clamp(img, -1.0, 1.0)
+    #     # if i == 0:
+    #     #     plt.imshow(tensor_to_zero_to_one(img[0].permute(1,2,0).cpu().detach().numpy()))      
+    #     if i % stepsize == 0:
+    #         plt.subplot(1, num_images, int(i/stepsize)+1)
+    #         show_tensor_image(img.detach().cpu())
+    # plt.show()
 
     trainer.train_loop(
         noise_predictor=u_net, 
@@ -89,7 +144,8 @@ if __name__ == "__main__":
         "epoch_history": epoch_history,
         # "scheduler": scheduler.state_dict(),
     }
-    torch.save(state, "saved_stuff/dummy_u_net_10_harpy_eagles.pth")
+    # torch.save(state, "saved_stuff/dummy_u_net_10_harpy_eagles.pth")
+    torch.save(state, "saved_stuff/super_copied_u_net_10_harpy_eagles.pth")
     
     """
     Loading raw jpg images and saving them as 4d tensor
