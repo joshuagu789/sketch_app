@@ -1,7 +1,9 @@
 # my personal stuff :)
 100-bird-species/
 saved_stuff/
-
+datasets/
+*animal-image-dataset-90-different-animals/
+*animal-image-dataset-90-different-animals/animals/animals/antelope/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
