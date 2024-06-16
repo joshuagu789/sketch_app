@@ -1,4 +1,7 @@
 import torch
+import matplotlib.pyplot as plt
+from torchvision import transforms
+import numpy as np
 
 """
 Contains useful methods, many follow style of helpers.py in minimagen 
@@ -41,3 +44,20 @@ def get_index_from_list(vals, t, x_shape):
     batch_size = t.shape[0]
     out = vals.gather(-1, t.cpu())
     return out.reshape(batch_size, *((1,) * (len(x_shape) - 1))).to(t.device)
+
+def show_tensor_image(image):
+    """
+    copy pastad from https://colab.research.google.com/drive/1sjy9odlSSy0RBVgMTgP7s99NXsqglsUL?usp=sharing#scrollTo=k13hj2mciCHA
+    """
+    reverse_transforms = transforms.Compose([
+        transforms.Lambda(lambda t: (t + 1) / 2),
+        transforms.Lambda(lambda t: t.permute(1, 2, 0)), # CHW to HWC
+        transforms.Lambda(lambda t: t * 255.),
+        transforms.Lambda(lambda t: t.numpy().astype(np.uint8)),
+        transforms.ToPILImage(),
+    ])
+
+    # Take first image of batch
+    if len(image.shape) == 4:
+        image = image[0, :, :, :] 
+    plt.imshow(reverse_transforms(image))

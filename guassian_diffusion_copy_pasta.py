@@ -29,7 +29,7 @@ def forward_diffusion_sample(x_0, t, device="cpu"):
 
 
 # Define beta schedule
-T = 1000
+T = 500
 betas = linear_beta_schedule(timesteps=T)
 
 # Pre-calculate different terms for closed form
