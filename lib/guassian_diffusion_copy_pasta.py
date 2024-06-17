@@ -13,6 +13,7 @@ def get_index_from_list(vals, t, x_shape):
     out = vals.gather(-1, t.cpu())
     return out.reshape(batch_size, *((1,) * (len(x_shape) - 1))).to(t.device)
 
+@torch.no_grad()
 def forward_diffusion_sample(x_0, t, device="cpu"):
     """ 
     Takes an image and a timestep as input and 

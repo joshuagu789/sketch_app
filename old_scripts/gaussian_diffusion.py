@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt 
 
-from helpers import extract, tensor_to_negative_one_to_one, tensor_to_zero_to_one, get_index_from_list
+from lib.helpers import extract, tensor_to_negative_one_to_one, tensor_to_zero_to_one, get_index_from_list
 
 class guassian_diffusion():
     """

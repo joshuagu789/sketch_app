@@ -1,7 +1,7 @@
 from torch import nn 
 import torch
 from layers import SinusoidalPosEmb, CrossEmbedLayer, ResnetBlock
-from einops.layers.torch import Rearrange
+# from einops.layers.torch import Rearrange
 
 class u_net(nn.Module):
     def __init__(self, lowres_images = False, *args, **kwargs):
@@ -37,7 +37,7 @@ class u_net(nn.Module):
         # "Maps time hidden states to time tokens for main conditioning tokens (attention)"
         self.to_time_tokens = nn.Sequential(
             nn.Linear(self.time_cond_dim, self.cond_dim * NUM_TIME_TOKENS),
-            Rearrange('b (r d) -> b r d', r=NUM_TIME_TOKENS)    # increases tensor by one dimension?
+            # Rearrange('b (r d) -> b r d', r=NUM_TIME_TOKENS)    # increases tensor by one dimension?
         )
 
         """

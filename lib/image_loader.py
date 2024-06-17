@@ -8,6 +8,12 @@ class image_loader():
     def __init__(self):
         self.pil_to_tensor = transforms.ToTensor()
 
+    def load_img_server(self, img):
+        """
+        Takes in jpg from server and returns a 4D tensor of shape (batch, channels, width, height)
+        """
+        return
+
     def store_images_from_directory_as_tensor(self, path, loads_everything = False, image_limit = -1, width_and_height = 224):
         """
         Returns a 4d tensor of (number, channels, width, height) from path

@@ -3,9 +3,9 @@ from torch import nn
 import matplotlib.pyplot as plt             # for seeing the images
 import torch.nn.functional as F
 
-from helpers import tensor_to_negative_one_to_one, tensor_to_zero_to_one
-from gaussian_diffusion import guassian_diffusion
-from guassian_diffusion_copy_pasta import forward_diffusion_sample
+from lib.helpers import tensor_to_negative_one_to_one, tensor_to_zero_to_one
+from old_scripts.gaussian_diffusion import guassian_diffusion
+from lib.guassian_diffusion_copy_pasta import forward_diffusion_sample
 
 class trainer:
     """
