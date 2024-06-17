@@ -3,6 +3,8 @@
 saved_stuff/
 datasets/
 *animal-image-dataset-90-different-animals/
+final_data_set_and_model/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -12,7 +12,7 @@ def cartoonify(tensor):
     tensor_numpy = (np.moveaxis(tensor_numpy, 0, -1) * 255).astype(np.uint8)
 
     hsv_img = cv2.cvtColor(tensor_numpy, cv2.COLOR_BGR2HSV)
-    hsv_img[...,1] = hsv_img[...,1] * 1.5
+    hsv_img[...,1] = hsv_img[...,1] * 1.35
     hsv_img[...,2] = (hsv_img[...,2]) * 1.25
 
     # tensor_numpy = cv2.cvtColor(hsv_img, cv2.COLOR_HSV2BGR)
