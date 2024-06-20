@@ -3,7 +3,7 @@
     var canvas = document.querySelector("#input");
     var ctx = canvas.getContext("2d");
     var mousedown = false; 
-    
+  
     const submitButton = document.querySelector(".submit")
     const clearButton = document.querySelector(".clear") 
     
@@ -29,8 +29,12 @@
     }
     
     function submitQuery(){
-  
+      let predictionElement = document.querySelector("#class-pred"); 
+      predictionElement.textContent = "Running model, please wait: ";
+
       const image = canvas.toDataURL();
+    // // const image = canvas.toDataURL(type="image/jpeg");
+    // const image = canvas.toDataURL("image/jpeg", 1.0);
       
       let url = "/predict"
     
@@ -39,14 +43,25 @@
       http.send(image) 
     
       http.onload = function(){
-  
-        let predictionElement = document.querySelector("#class-pred"); 
-        
-        if (http.status === 200){
-          let response_obj = http.response; 
-    
           
-          predictionElement.textContent = `predicted class from the model: ${response_obj}`; 
+        if (http.status === 200){
+          let predictionElement = document.querySelector("#class-pred"); 
+
+          // let response_obj = http.response; 
+          // let path = `{{url_for('static', filename=${response_obj})}}`; 
+
+          // let img = document.getElementsByClassName("image")
+          // // img.src = path;
+          // img.src = "{{url_for('static', filename='output.jpg')}}";
+
+          // window.alert(response_obj)
+          // console.log(response_obj)
+          // console.log(predictionElement)
+          // console.log(path)
+          location.reload();
+
+          predictionElement.textContent = "Model output: ";
+          // predictionElement.textContent = `predicted class from the model: ${path}`; 
         }else{
           predictionElement.textContent = "An error occured"; 
         }

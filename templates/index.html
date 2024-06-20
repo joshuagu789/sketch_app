@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CNN demo</title>
+    <title>THE COGGER</title>
     <link rel="stylesheet" href="/static/index.css">
 </head>
 <body>
     <h1>THE COGGER</h1>
-    <h2>Draw an image of a digit between 0 and 9</h2>
+    <h2>Draw an image to condition the cat/dog face generator off of</h2>
     <div class="main">
         <div class="input-container">
             <div class="control-panel">
@@ -21,7 +21,24 @@
         <div class="output">
             <h2 id="class-pred"></h2>
         </div>
+
     </div>
+    <div class="output-image">
+        <img class="image" src="{{url_for('static', filename='output.jpg')}}" align="middle" width="1000" height="700"/>  
+
+        <!-- <img src= "website_images/default.jpg" width="400" height="400"></img> -->
+        <!-- <img src= "default.jpg" width="1200" height="400"></img> -->
+        <!-- <img src= "default.jpg"/> -->
+    </div>
+
+    <!-- <img src= "{{url_for('static', filename='/Image/GP.png')}}" > -->
+<!-- 
+    <div class="output-image">
+        <img src= "website_images/default.jpg" width="400" height="400"></img>
+    </div> -->
+    <!-- <img src= "default.jpg" alt="image not showing"> -->
+    <!-- <img class="image" src="{{url_for('static', filename='output.jpg')}}" align="middle" width="1000" height="700"/>   -->
+    <!-- <img class="image" src={{url_for('static', filename=user_image)}} align="middle" /> -->
     <script type="text/javascript" src="static/index.js"></script>
 </body>
 </html>

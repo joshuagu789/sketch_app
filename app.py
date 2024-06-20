@@ -16,13 +16,13 @@ from lib.image_loader import image_loader
 from lib.image_editing import cartoonify
 from lib.sampler import sample_img, sample_img_from_request
 
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, current_app
 
 app = Flask(__name__)
 
 @app.route('/')
 def root():
-    return render_template("index.html")
+    return render_template("index.html",user_image ='default.jpg')
 
 @app.route('/predict', methods=['POST'])
 def predictions_endpoint():
@@ -33,12 +33,19 @@ def predictions_endpoint():
         state = torch.load("final_data_set_and_model/super_copied_cat_and_dog_faces.pth")
         u_net.load_state_dict(state["state_dict"])
 
-        file = request.data
+        file = request.data # base64 string from image encoding
+
         # predicted_class = make_predictions(file)
+        # print(file)
         sample_img_from_request(file, u_net, device, 250, 80)
 
-    img = Image.open("output.jpg")
-    return jsonify(img)
+    # img = Image.open("output.jpg")
+    # return jsonify(img)
+    # current_app.config
+    # return render_template("index.html",user_image ='output.jpg')
+
+    return jsonify('output.jpg')
+
 
 
 if __name__ == "__main__":

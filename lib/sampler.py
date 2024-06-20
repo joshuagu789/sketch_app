@@ -1,6 +1,8 @@
 from torchvision import transforms
 from PIL import Image
 import torch
+import matplotlib
+matplotlib.use('Agg')   # suggested code for pyplot to work with flask
 import matplotlib.pyplot as plt
 
 from lib.guassian_diffusion_copy_pasta import sample_timestep, forward_diffusion_sample
@@ -12,13 +14,31 @@ import base64
 import json
 
 @torch.no_grad()
-def sample_img_from_request(image_file, model, device, timesteps, width_and_height):
+def sample_img_from_request(image_base64, model, device, timesteps, width_and_height):
     """
     Same thing as sample_img but from request from website
+    image_base64: base64 string encoding of image
     """
-    encodings = image_file.split(b',')[-1]
+    encodings = image_base64.split(b',')[-1]    # removes data:image/png;base64 from encoding or something like that
+    # print(encodings)
     image_bytes = base64.decodebytes(encodings) 
+    # print(image_bytes)
     pil_image = Image.open(BytesIO(image_bytes))
+    # print(pil_image)
+
+    white = (255,255,255)
+    background = Image.new(pil_image.mode[:-1], pil_image.size, white)
+    background.paste(pil_image, pil_image.split()[-1])  # make transparent background of png white for conversion to jpg
+    pil_image = background
+    
+    pil_image = pil_image.convert('RGB')    # originally rgba now rgb because png to jpg
+    pil_image.save("test.jpg")
+
+    # img_data = base64.decodebytes(image_base64)
+    # # img_data = base64.b64decode(image_base64['img'])
+    # print(img_data)
+    # pil_image1 = Image.open(BytesIO(img_data))
+    # print(pil_image1)
 
     resizer = transforms.Resize((width_and_height,width_and_height)) 
     pil_to_tensor = transforms.ToTensor()
@@ -56,7 +76,7 @@ def sample_img_from_request(image_file, model, device, timesteps, width_and_heig
     plt.imshow(cartoon.cpu().detach().numpy())
     plt.title("Cartoon")    
     # plt.show()
-    plt.savefig("output.jpg")
+    plt.savefig("static/output.jpg")
 
 @torch.no_grad()
 def sample_img(path, model, device, timesteps, width_and_height):
