@@ -1,6 +1,7 @@
 NOTE: all images expected to have values between -1 and 1
 
 Sources used:
+    NOTE: SIMPLE UNET WAS NOT CREATED USING MY CODE (I tried to design unet model but had trouble with sinusoidal time embedding)
     Diffusion and Training:
     https://www.kaggle.com/code/adrynh/pytorch-tutorial-with-fashion-mnist
     https://huggingface.co/docs/diffusers/v0.16.0/en/api/pipelines/stable_diffusion/controlnet
@@ -23,6 +24,7 @@ Sources used:
     https://github.com/lucidrains/einops-exts/blob/main/einops_exts/torch.py
 
     Making Website:
+    NOTE: DRAW TOOL WAS NOT CREATED USING MY CODE
     https://pytorch.org/tutorials/intermediate/flask_rest_api_tutorial.html
     https://medium.com/@goelpulkit43/deploy-a-pytorch-convolutional-neural-network-via-rest-api-using-flask-40bf0facd65d
     
