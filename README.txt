@@ -28,3 +28,4 @@ Sources used:
     https://pytorch.org/tutorials/intermediate/flask_rest_api_tutorial.html
     https://medium.com/@goelpulkit43/deploy-a-pytorch-convolutional-neural-network-via-rest-api-using-flask-40bf0facd65d
     
+![cartoonized_cat](https://github.com/user-attachments/assets/2bc218eb-39b8-4631-bb8c-e54fd58296e3)
