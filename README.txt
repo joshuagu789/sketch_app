@@ -24,7 +24,7 @@ Sources used:
     https://github.com/lucidrains/einops-exts/blob/main/einops_exts/torch.py
 
     Making Website:
-    NOTE: DRAW TOOL AND HTMML/CSS/JAVASCRIPT FORMATTING WAS NOT CREATED USING MY CODE
+    NOTE: DRAW TOOL AND HTMML/CSS/JAVASCRIPT FORMATTING WAS NOT CREATED USING MY CODE (Though I did have to adjust and edit some parts to fit the project)
     https://pytorch.org/tutorials/intermediate/flask_rest_api_tutorial.html
     https://medium.com/@goelpulkit43/deploy-a-pytorch-convolutional-neural-network-via-rest-api-using-flask-40bf0facd65d
 
